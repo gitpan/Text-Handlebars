@@ -1,0 +1,368 @@
+package Text::Handlebars;
+BEGIN {
+  $Text::Handlebars::AUTHORITY = 'cpan:DOY';
+}
+{
+  $Text::Handlebars::VERSION = '0.01';
+}
+use strict;
+use warnings;
+# ABSTRACT: http://handlebarsjs.com/ for Text::Xslate
+
+use base 'Text::Xslate';
+
+use Scalar::Util 'weaken';
+use Try::Tiny;
+
+
+sub default_helpers {
+    my $class = shift;
+    return {
+        with => sub {
+            my ($context, $new_context, $options) = @_;
+            return $options->{fn}->($new_context);
+        },
+        each => sub {
+            my ($context, $list, $options) = @_;
+            return join '', map { $options->{fn}->($_) } @$list;
+        },
+        if => sub {
+            my ($context, $conditional, $options) = @_;
+            return $conditional
+                ? $options->{fn}->($context)
+                : $options->{inverse}->($context);
+        },
+        unless => sub {
+            my ($context, $conditional, $options) = @_;
+            return $conditional
+                ? $options->{inverse}->($context)
+                : $options->{fn}->($context);
+        },
+    };
+}
+
+sub default_functions {
+    my $class = shift;
+    return {
+        %{ $class->SUPER::default_functions(@_) },
+        %{ $class->default_helpers },
+        '(is_falsy)' => sub {
+            my ($val) = @_;
+            if (ref($val) && ref($val) eq 'ARRAY') {
+                return @$val == 0;
+            }
+            else {
+                return !$val;
+            }
+        },
+        '(make_array)' => sub {
+            my ($length) = @_;
+            return [(undef) x $length];
+        },
+        '(make_hash)' => sub {
+            my (%hash) = @_;
+            return \%hash;
+        },
+        '(is_code)' => sub {
+            my ($val) = @_;
+            return ref($val) && ref($val) eq 'CODE';
+        },
+        '(new_vars_for)' => sub {
+            my ($vars, $value, $i) = @_;
+
+            if (my $ref = ref($value)) {
+                if (defined $ref && $ref eq 'ARRAY') {
+                    die "no iterator cycle provided?"
+                        unless defined $i;
+
+                    $value = ref($value->[$i]) && ref($value->[$i]) eq 'HASH'
+                        ? { '.' => $value->[$i], %{ $value->[$i] } }
+                        : { '.' => $value->[$i] };
+
+                    $ref = ref($value);
+                }
+
+                return $vars unless $ref && $ref eq 'HASH';
+
+                weaken(my $vars_copy = $vars);
+                return {
+                    '@index' => $i,
+                    %$vars,
+                    %$value,
+                    '..' => $vars_copy,
+                };
+            }
+            else {
+                return $vars;
+            }
+        },
+    };
+}
+
+sub options {
+    my $class = shift;
+
+    my $options = $class->SUPER::options(@_);
+
+    $options->{compiler} = 'Text::Handlebars::Compiler';
+    $options->{helpers} = {};
+
+    return $options;
+}
+
+sub _register_builtin_methods {
+    my $self = shift;
+    my ($funcs) = @_;
+
+    weaken(my $weakself = $self);
+    $funcs->{'(run_code)'} = sub {
+        my ($code, $vars, $open_tag, $close_tag, @args) = @_;
+        my $to_render = $code->(@args);
+        $to_render = "{{= $open_tag $close_tag =}}$to_render"
+            if defined($open_tag) && defined($close_tag) && $close_tag ne '}}';
+        return $weakself->render_string($to_render, $vars);
+    };
+    $funcs->{'(find_file)'} = sub {
+        my ($filename) = @_;
+        return $filename if try { $weakself->find_file($filename); 1 };
+        $filename .= $weakself->{suffix};
+        return $filename if try { $weakself->find_file($filename); 1 };
+        return 0;
+    };
+    $funcs->{'(make_block_helper)'} = sub {
+        my ($code, $raw_text, $else_raw_text, $hash) = @_;
+
+        my $options = {};
+        $options->{fn} = sub {
+            my ($new_vars) = @_;
+            return $weakself->render_string($raw_text, $new_vars);
+        };
+        $options->{inverse} = sub {
+            my ($new_vars) = @_;
+            return $weakself->render_string($else_raw_text, $new_vars);
+        };
+        $options->{hash} = $hash;
+
+        return sub { $code->(@_, $options); };
+    };
+
+    for my $helper (keys %{ $self->{helpers} }) {
+        $funcs->{$helper} = $self->{helpers}{$helper};
+    }
+}
+
+sub _compiler {
+    my $self = shift;
+
+    if (!ref($self->{compiler})) {
+        my $compiler = $self->SUPER::_compiler(@_);
+        $compiler->define_helper(keys %{ $self->{helpers} });
+        $compiler->define_helper(keys %{ $self->default_helpers });
+        return $compiler;
+    }
+    else {
+        return $self->SUPER::_compiler(@_);
+    }
+}
+
+sub render_string {
+    my $self = shift;
+    my ($string, $vars) = @_;
+
+    if (ref($vars) && ref($vars) eq 'HASH') {
+        return $self->SUPER::render_string(@_);
+    }
+    else {
+        return $self->SUPER::render_string($string, { '.' => $vars });
+    }
+}
+
+sub render {
+    my $self = shift;
+    my ($name, $vars) = @_;
+
+    if (ref($vars) && ref($vars) eq 'HASH') {
+        return $self->SUPER::render(@_);
+    }
+    else {
+        return $self->SUPER::render($name, { '.' => $vars });
+    }
+}
+
+
+1;
+
+__END__
+=pod
+
+=head1 NAME
+
+Text::Handlebars - http://handlebarsjs.com/ for Text::Xslate
+
+=head1 VERSION
+
+version 0.01
+
+=head1 SYNOPSIS
+
+  use Text::Handlebars;
+
+  my $handlebars = Text::Handlebars->new(
+      helpers => {
+          fullName => sub {
+              my ($context, $person) = @_;
+              return $person->{firstName}
+                   . ' '
+                   . $person->{lastName};
+          },
+      },
+  );
+
+  my $vars = {
+      author   => { firstName => 'Alan', lastName => 'Johnson' },
+      body     => "I Love Handlebars",
+      comments => [
+          author => { firstName => 'Yehuda', lastName => 'Katz' },
+          body   => "Me too!",
+      ],
+  };
+
+  say $handlebars->render_string(<<'TEMPLATE', $vars);
+  <div class="post">
+    <h1>By {{fullName author}}</h1>
+    <div class="body">{{body}}</div>
+
+    <h1>Comments</h1>
+
+    {{#each comments}}
+    <h2>By {{fullName author}}</h2>
+    <div class="body">{{body}}</div>
+    {{/each}}
+  </div>
+  TEMPLATE
+
+produces
+
+  <div class="post">
+    <h1>By Alan Johnson</h1>
+    <div class="body">I Love Handlebars</div>
+
+    <h1>Comments</h1>
+
+    <h2>By Yehuda Katz</h2>
+    <div class="body">Me Too!</div>
+  </div>
+
+=head1 DESCRIPTION
+
+This module subclasses L<Text::Xslate> to provide a parser for
+L<Handlebars|http://handlebarsjs.com/> templates. In most ways, this module
+functions identically to Text::Xslate, except that it parses Handlebars
+templates instead.
+
+Text::Handlebars accepts an additional constructor parameter of C<helpers> to
+define Handlebars-style helper functions. Standard helpers are identical to
+functions defined with the C<function> parameter, except that they receive the
+current context implicitly as the first parameter (since perl doesn't have an
+implicit C<this> parameter). Block helpers also receive the context as the
+first parameter, and they also receive the C<options> parameter as a hashref.
+As an example:
+
+  sub {
+      my ($context, $items, $options) = @_;
+
+      my $out = "<ul>";
+
+      for my $item (@$items) {
+          $out .= "<li>" . $options->{fn}->($item) . "</li>";
+      }
+
+      return $out . "</ul>\n";
+  },
+
+defines a simple block helper to generate a C<< <ul> >> list.
+
+Text::Handlebars also overrides C<render> and C<render_string> to allow using
+any type of data (not just hashrefs) as a context (so rendering a template
+consisting of only C<{{.}}> works properly).
+
+=head1 BUGS/CAVEATS
+
+=over 4
+
+=item *
+
+The auto-indenting behavior for partials is not yet implemented, due to
+limitations in Text::Xslate.
+
+=item *
+
+Passing a new context to partials is not yet supported.
+
+=item *
+
+The C<data> parameter for C<@foo> variables when calling
+C<< $options->{fn}->() >> is not supported, because I don't understand its
+purpose. If someone wants this functionality, feel free to let me know, and
+tell me why.
+
+=back
+
+Please report any bugs through RT: email
+C<bug-text-handlebars at rt.cpan.org>, or browse to
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Text-Handlebars>.
+
+=head1 SEE ALSO
+
+L<http://handlebarsjs.com/>
+
+L<Text::Xslate>
+
+=head1 SUPPORT
+
+You can find this documentation for this module with the perldoc command.
+
+    perldoc Text::Handlebars
+
+You can also look for information at:
+
+=over 4
+
+=item * AnnoCPAN: Annotated CPAN documentation
+
+L<http://annocpan.org/dist/Text-Handlebars>
+
+=item * CPAN Ratings
+
+L<http://cpanratings.perl.org/d/Text-Handlebars>
+
+=item * RT: CPAN's request tracker
+
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Text-Handlebars>
+
+=item * Search CPAN
+
+L<http://search.cpan.org/dist/Text-Handlebars>
+
+=back
+
+=for Pod::Coverage default_helpers
+  default_functions
+  options
+  render
+  render_string
+
+=head1 AUTHOR
+
+Jesse Luehrs <doy at cpan dot org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is Copyright (c) 2012 by Jesse Luehrs.
+
+This is free software, licensed under:
+
+  The MIT (X11) License
+
+=cut
+
