@@ -21,6 +21,7 @@ t/helpers.t
 t/lambdas.t
 t/lib/Test/Handlebars.pm
 t/mustache-extra.t
+t/mustache-spec-syntax-only.t
 t/mustache-spec.t
 t/mustache-spec/Changes
 t/mustache-spec/README.md
@@ -45,7 +46,6 @@ t/mustache/partials/base.mustache
 t/mustache/partials/user.mustache
 t/partials.t
 t/safestring.t
-xt/release/eol.t
 xt/release/no-tabs.t
 xt/release/pod-coverage.t
 xt/release/pod-syntax.t

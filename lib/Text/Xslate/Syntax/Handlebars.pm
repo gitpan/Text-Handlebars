@@ -3,7 +3,7 @@ BEGIN {
   $Text::Xslate::Syntax::Handlebars::AUTHORITY = 'cpan:DOY';
 }
 {
-  $Text::Xslate::Syntax::Handlebars::VERSION = '0.01';
+  $Text::Xslate::Syntax::Handlebars::VERSION = '0.02';
 }
 use Any::Moose;
 
@@ -441,10 +441,16 @@ sub std_partial {
 
     my $partial = $self->token->clone(arity => 'literal');
     $self->advance;
+    my $args;
+    if ($self->token->id ne ';') {
+        $args = $self->expression(0);
+    }
+    $self->advance(';');
 
     return $symbol->clone(
-        arity => 'partial',
-        first => $partial,
+        arity  => 'partial',
+        first  => ($partial->id =~ /\./ ? $partial : [ $partial ]),
+        second => $args,
     );
 }
 
@@ -598,21 +604,8 @@ sub _field_to_string {
 __PACKAGE__->meta->make_immutable;
 no Any::Moose;
 
-
-1;
-
-__END__
-=pod
-
-=head1 NAME
-
-Text::Xslate::Syntax::Handlebars
-
-=head1 VERSION
-
-version 0.01
-
-=for Pod::Coverage call
+=for Pod::Coverage
+  call
   define_function
   define_helper
   expression
@@ -636,17 +629,6 @@ version 0.01
   tokenize
   undefined_name
 
-=head1 AUTHOR
-
-Jesse Luehrs <doy at cpan dot org>
-
-=head1 COPYRIGHT AND LICENSE
-
-This software is Copyright (c) 2012 by Jesse Luehrs.
-
-This is free software, licensed under:
-
-  The MIT (X11) License
-
 =cut
 
+1;

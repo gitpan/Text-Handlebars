@@ -20,12 +20,10 @@ use Sub::Exporter -setup => {
 my $Test = Test::Builder->new;
 
 sub render_ok {
-    local $Test::Builder::Level = $Test::Builder::Level + 1;
     return _render_ok('render_string', @_);
 }
 
 sub render_file_ok {
-    local $Test::Builder::Level = $Test::Builder::Level + 1;
     return _render_ok('render', @_);
 }
 
@@ -36,8 +34,11 @@ sub _render_ok {
     my ($template, $env, $expected, $desc) = @_;
 
     $opts->{cache} = 0;
+    my $create = delete $opts->{__create} || sub {
+        Text::Handlebars->new(%{ $_[0] });
+    };
 
-    my $tx = Text::Handlebars->new(%$opts);
+    my $tx = $create->($opts);
 
     my $exception = exception {
         local $Test::Builder::Level = $Test::Builder::Level + 5;

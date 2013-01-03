@@ -31,7 +31,7 @@ my %WriteMakefileArgs = (
     "Any::Moose" => 0,
     "Carp" => 0,
     "Scalar::Util" => 0,
-    "Text::Xslate" => 0,
+    "Text::Xslate" => "1.6000",
     "Text::Xslate::Compiler" => 0,
     "Text::Xslate::Parser" => 0,
     "Text::Xslate::Symbol" => 0,
@@ -42,7 +42,7 @@ my %WriteMakefileArgs = (
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "0.01",
+  "VERSION" => "0.02",
   "test" => {
     "TESTS" => "t/*.t"
   }

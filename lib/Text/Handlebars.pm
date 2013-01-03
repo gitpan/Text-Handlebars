@@ -3,12 +3,13 @@ BEGIN {
   $Text::Handlebars::AUTHORITY = 'cpan:DOY';
 }
 {
-  $Text::Handlebars::VERSION = '0.01';
+  $Text::Handlebars::VERSION = '0.02';
 }
 use strict;
 use warnings;
 # ABSTRACT: http://handlebarsjs.com/ for Text::Xslate
 
+use Text::Xslate 1.6000;
 use base 'Text::Xslate';
 
 use Scalar::Util 'weaken';
@@ -46,56 +47,6 @@ sub default_functions {
     return {
         %{ $class->SUPER::default_functions(@_) },
         %{ $class->default_helpers },
-        '(is_falsy)' => sub {
-            my ($val) = @_;
-            if (ref($val) && ref($val) eq 'ARRAY') {
-                return @$val == 0;
-            }
-            else {
-                return !$val;
-            }
-        },
-        '(make_array)' => sub {
-            my ($length) = @_;
-            return [(undef) x $length];
-        },
-        '(make_hash)' => sub {
-            my (%hash) = @_;
-            return \%hash;
-        },
-        '(is_code)' => sub {
-            my ($val) = @_;
-            return ref($val) && ref($val) eq 'CODE';
-        },
-        '(new_vars_for)' => sub {
-            my ($vars, $value, $i) = @_;
-
-            if (my $ref = ref($value)) {
-                if (defined $ref && $ref eq 'ARRAY') {
-                    die "no iterator cycle provided?"
-                        unless defined $i;
-
-                    $value = ref($value->[$i]) && ref($value->[$i]) eq 'HASH'
-                        ? { '.' => $value->[$i], %{ $value->[$i] } }
-                        : { '.' => $value->[$i] };
-
-                    $ref = ref($value);
-                }
-
-                return $vars unless $ref && $ref eq 'HASH';
-
-                weaken(my $vars_copy = $vars);
-                return {
-                    '@index' => $i,
-                    %$vars,
-                    %$value,
-                    '..' => $vars_copy,
-                };
-            }
-            else {
-                return $vars;
-            }
-        },
     };
 }
 
@@ -115,30 +66,28 @@ sub _register_builtin_methods {
     my ($funcs) = @_;
 
     weaken(my $weakself = $self);
-    $funcs->{'(run_code)'} = sub {
-        my ($code, $vars, $open_tag, $close_tag, @args) = @_;
-        my $to_render = $code->(@args);
-        $to_render = "{{= $open_tag $close_tag =}}$to_render"
-            if defined($open_tag) && defined($close_tag) && $close_tag ne '}}';
+    $funcs->{'(render_string)'} = sub {
+        my ($to_render, $vars) = @_;
         return $weakself->render_string($to_render, $vars);
     };
-    $funcs->{'(find_file)'} = sub {
-        my ($filename) = @_;
-        return $filename if try { $weakself->find_file($filename); 1 };
-        $filename .= $weakself->{suffix};
-        return $filename if try { $weakself->find_file($filename); 1 };
-        return 0;
-    };
     $funcs->{'(make_block_helper)'} = sub {
-        my ($code, $raw_text, $else_raw_text, $hash) = @_;
+        my ($vars, $code, $raw_text, $else_raw_text, $hash) = @_;
 
         my $options = {};
         $options->{fn} = sub {
             my ($new_vars) = @_;
+            $new_vars = {
+                %{ canonicalize_vars($new_vars) },
+                '..' => $vars,
+            };
             return $weakself->render_string($raw_text, $new_vars);
         };
         $options->{inverse} = sub {
             my ($new_vars) = @_;
+            $new_vars = {
+                %{ canonicalize_vars($new_vars) },
+                '..' => $vars,
+            };
             return $weakself->render_string($else_raw_text, $new_vars);
         };
         $options->{hash} = $hash;
@@ -169,23 +118,23 @@ sub render_string {
     my $self = shift;
     my ($string, $vars) = @_;
 
-    if (ref($vars) && ref($vars) eq 'HASH') {
-        return $self->SUPER::render_string(@_);
-    }
-    else {
-        return $self->SUPER::render_string($string, { '.' => $vars });
-    }
+    return $self->SUPER::render_string($string, canonicalize_vars($vars));
 }
 
 sub render {
     my $self = shift;
     my ($name, $vars) = @_;
 
+    return $self->SUPER::render($name, canonicalize_vars($vars));
+}
+
+sub canonicalize_vars {
+    my ($vars) = @_;
     if (ref($vars) && ref($vars) eq 'HASH') {
-        return $self->SUPER::render(@_);
+        return $vars;
     }
     else {
-        return $self->SUPER::render($name, { '.' => $vars });
+        return { '.' => $vars };
     }
 }
 
@@ -193,6 +142,7 @@ sub render {
 1;
 
 __END__
+
 =pod
 
 =head1 NAME
@@ -201,7 +151,7 @@ Text::Handlebars - http://handlebarsjs.com/ for Text::Xslate
 
 =head1 VERSION
 
-version 0.01
+version 0.02
 
 =head1 SYNOPSIS
 
@@ -297,10 +247,6 @@ limitations in Text::Xslate.
 
 =item *
 
-Passing a new context to partials is not yet supported.
-
-=item *
-
 The C<data> parameter for C<@foo> variables when calling
 C<< $options->{fn}->() >> is not supported, because I don't understand its
 purpose. If someone wants this functionality, feel free to let me know, and
@@ -349,8 +295,9 @@ L<http://search.cpan.org/dist/Text-Handlebars>
 =for Pod::Coverage default_helpers
   default_functions
   options
-  render
   render_string
+  render
+  canonicalize_vars
 
 =head1 AUTHOR
 
@@ -358,11 +305,10 @@ Jesse Luehrs <doy at cpan dot org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2012 by Jesse Luehrs.
+This software is Copyright (c) 2013 by Jesse Luehrs.
 
 This is free software, licensed under:
 
   The MIT (X11) License
 
 =cut
-
