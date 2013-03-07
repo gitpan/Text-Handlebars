@@ -3,9 +3,9 @@ BEGIN {
   $Text::Handlebars::Symbol::AUTHORITY = 'cpan:DOY';
 }
 {
-  $Text::Handlebars::Symbol::VERSION = '0.02';
+  $Text::Handlebars::Symbol::VERSION = '0.03';
 }
-use Any::Moose;
+use Mouse;
 
 extends 'Text::Xslate::Symbol';
 
@@ -20,6 +20,6 @@ has is_block_helper => (
 );
 
 __PACKAGE__->meta->make_immutable;
-no Any::Moose;
+no Mouse;
 
 1;

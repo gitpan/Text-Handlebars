@@ -35,10 +35,10 @@
       },
       "runtime" : {
          "requires" : {
-            "Any::Moose" : "0",
             "Carp" : "0",
+            "Mouse" : "0",
             "Scalar::Util" : "0",
-            "Text::Xslate" : "1.6000",
+            "Text::Xslate" : "2.0000",
             "Text::Xslate::Compiler" : "0",
             "Text::Xslate::Parser" : "0",
             "Text::Xslate::Symbol" : "0",
@@ -75,7 +75,7 @@
          "web" : "https://github.com/doy/text-handlebars"
       }
    },
-   "version" : "0.02",
+   "version" : "0.03",
    "x_Dist_Zilla" : {
       "perl" : {
          "version" : "5.016002"

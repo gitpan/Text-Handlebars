@@ -3,13 +3,13 @@ BEGIN {
   $Text::Handlebars::AUTHORITY = 'cpan:DOY';
 }
 {
-  $Text::Handlebars::VERSION = '0.02';
+  $Text::Handlebars::VERSION = '0.03';
 }
 use strict;
 use warnings;
 # ABSTRACT: http://handlebarsjs.com/ for Text::Xslate
 
-use Text::Xslate 1.6000;
+use Text::Xslate 2.0000;
 use base 'Text::Xslate';
 
 use Scalar::Util 'weaken';
@@ -151,7 +151,7 @@ Text::Handlebars - http://handlebarsjs.com/ for Text::Xslate
 
 =head1 VERSION
 
-version 0.02
+version 0.03
 
 =head1 SYNOPSIS
 

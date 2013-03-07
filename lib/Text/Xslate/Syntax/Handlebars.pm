@@ -3,9 +3,9 @@ BEGIN {
   $Text::Xslate::Syntax::Handlebars::AUTHORITY = 'cpan:DOY';
 }
 {
-  $Text::Xslate::Syntax::Handlebars::VERSION = '0.02';
+  $Text::Xslate::Syntax::Handlebars::VERSION = '0.03';
 }
-use Any::Moose;
+use Mouse;
 
 use Carp 'confess';
 use Text::Xslate::Util qw($DEBUG $NUMBER neat p);
@@ -602,7 +602,7 @@ sub _field_to_string {
 }
 
 __PACKAGE__->meta->make_immutable;
-no Any::Moose;
+no Mouse;
 
 =for Pod::Coverage
   call

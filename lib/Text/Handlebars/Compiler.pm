@@ -3,9 +3,9 @@ BEGIN {
   $Text::Handlebars::Compiler::AUTHORITY = 'cpan:DOY';
 }
 {
-  $Text::Handlebars::Compiler::VERSION = '0.02';
+  $Text::Handlebars::Compiler::VERSION = '0.03';
 }
-use Any::Moose;
+use Mouse;
 
 extends 'Text::Xslate::Compiler';
 
@@ -653,7 +653,7 @@ sub merge_single_hash {
 sub literal { shift->parser->literal(@_) }
 
 __PACKAGE__->meta->make_immutable;
-no Any::Moose;
+no Mouse;
 
 =for Pod::Coverage
   define_helper

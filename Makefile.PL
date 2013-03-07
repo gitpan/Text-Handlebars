@@ -28,10 +28,10 @@ my %WriteMakefileArgs = (
   "LICENSE" => "mit",
   "NAME" => "Text::Handlebars",
   "PREREQ_PM" => {
-    "Any::Moose" => 0,
     "Carp" => 0,
+    "Mouse" => 0,
     "Scalar::Util" => 0,
-    "Text::Xslate" => "1.6000",
+    "Text::Xslate" => "2.0000",
     "Text::Xslate::Compiler" => 0,
     "Text::Xslate::Parser" => 0,
     "Text::Xslate::Symbol" => 0,
@@ -42,7 +42,7 @@ my %WriteMakefileArgs = (
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "0.02",
+  "VERSION" => "0.03",
   "test" => {
     "TESTS" => "t/*.t"
   }
