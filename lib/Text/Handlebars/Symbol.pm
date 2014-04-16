@@ -2,9 +2,7 @@ package Text::Handlebars::Symbol;
 BEGIN {
   $Text::Handlebars::Symbol::AUTHORITY = 'cpan:DOY';
 }
-{
-  $Text::Handlebars::Symbol::VERSION = '0.03';
-}
+$Text::Handlebars::Symbol::VERSION = '0.04';
 use Mouse;
 
 extends 'Text::Xslate::Symbol';
@@ -21,5 +19,9 @@ has is_block_helper => (
 
 __PACKAGE__->meta->make_immutable;
 no Mouse;
+
+=for Pod::Coverage
+
+=cut
 
 1;

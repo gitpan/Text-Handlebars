@@ -2,9 +2,7 @@ package Text::Xslate::Syntax::Handlebars;
 BEGIN {
   $Text::Xslate::Syntax::Handlebars::AUTHORITY = 'cpan:DOY';
 }
-{
-  $Text::Xslate::Syntax::Handlebars::VERSION = '0.03';
-}
+$Text::Xslate::Syntax::Handlebars::VERSION = '0.04';
 use Mouse;
 
 use Carp 'confess';
@@ -265,6 +263,7 @@ sub init_symbols {
 
     $self->symbol('&')->set_nud($self->can('nud_mark_raw'));
     $self->symbol('..')->set_nud($self->can('nud_uplevel'));
+    $self->symbol('..')->lbp(10);
 
     $self->infix('=', 20, $self->can('led_equals'));
 }

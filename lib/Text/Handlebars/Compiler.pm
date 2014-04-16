@@ -2,9 +2,7 @@ package Text::Handlebars::Compiler;
 BEGIN {
   $Text::Handlebars::Compiler::AUTHORITY = 'cpan:DOY';
 }
-{
-  $Text::Handlebars::Compiler::VERSION = '0.03';
-}
+$Text::Handlebars::Compiler::VERSION = '0.04';
 use Mouse;
 
 extends 'Text::Xslate::Compiler';

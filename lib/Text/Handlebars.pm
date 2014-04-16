@@ -2,9 +2,7 @@ package Text::Handlebars;
 BEGIN {
   $Text::Handlebars::AUTHORITY = 'cpan:DOY';
 }
-{
-  $Text::Handlebars::VERSION = '0.03';
-}
+$Text::Handlebars::VERSION = '0.04';
 use strict;
 use warnings;
 # ABSTRACT: http://handlebarsjs.com/ for Text::Xslate
@@ -145,13 +143,15 @@ __END__
 
 =pod
 
+=encoding UTF-8
+
 =head1 NAME
 
 Text::Handlebars - http://handlebarsjs.com/ for Text::Xslate
 
 =head1 VERSION
 
-version 0.03
+version 0.04
 
 =head1 SYNOPSIS
 
@@ -171,10 +171,10 @@ version 0.03
   my $vars = {
       author   => { firstName => 'Alan', lastName => 'Johnson' },
       body     => "I Love Handlebars",
-      comments => [
+      comments => [{
           author => { firstName => 'Yehuda', lastName => 'Katz' },
           body   => "Me too!",
-      ],
+      }],
   };
 
   say $handlebars->render_string(<<'TEMPLATE', $vars);
@@ -254,9 +254,8 @@ tell me why.
 
 =back
 
-Please report any bugs through RT: email
-C<bug-text-handlebars at rt.cpan.org>, or browse to
-L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Text-Handlebars>.
+Please report any bugs to GitHub Issues at
+L<https://github.com/doy/text-handlebars/issues>.
 
 =head1 SEE ALSO
 
@@ -274,21 +273,21 @@ You can also look for information at:
 
 =over 4
 
-=item * AnnoCPAN: Annotated CPAN documentation
+=item * MetaCPAN
 
-L<http://annocpan.org/dist/Text-Handlebars>
+L<https://metacpan.org/release/Text-Handlebars>
 
-=item * CPAN Ratings
+=item * Github
 
-L<http://cpanratings.perl.org/d/Text-Handlebars>
+L<https://github.com/doy/text-handlebars>
 
 =item * RT: CPAN's request tracker
 
 L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Text-Handlebars>
 
-=item * Search CPAN
+=item * CPAN Ratings
 
-L<http://search.cpan.org/dist/Text-Handlebars>
+L<http://cpanratings.perl.org/d/Text-Handlebars>
 
 =back
 
@@ -301,11 +300,11 @@ L<http://search.cpan.org/dist/Text-Handlebars>
 
 =head1 AUTHOR
 
-Jesse Luehrs <doy at cpan dot org>
+Jesse Luehrs <doy@tozt.net>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2013 by Jesse Luehrs.
+This software is Copyright (c) 2014 by Jesse Luehrs.
 
 This is free software, licensed under:
 
